@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { AGENT_CONFIGS, type AgentConfig } from './agents';
 import { z } from 'zod';
-import { v4 as uuid } from 'uuid';
 
 const agentApi = axios.create({
     baseURL: import.meta.env.VITE_AGENT_BASE_URL, // Replace with your agent API base URL
@@ -15,9 +14,8 @@ const callAgent = async (params: {
     agentId: string;
     config: AgentConfig['config'];
     eventConfig?: AgentConfig['triggerEvents'][number];
-    uid?: string;
 }) => {
-    const { agentId, event, payload, config, eventConfig, documents, uid = uuid() } = params;
+    const { agentId, event, payload, config, eventConfig, documents } = params;
     let message = `Event ${event} happened.`;
     try {
         // Passing output schema in message
@@ -30,7 +28,7 @@ const callAgent = async (params: {
         // calling agent trigger api
         const res = await agentApi.post(
             `/agent-executor/agents/${agentId}/trigger`,
-            { message, payload, executionMode: eventConfig?.type || 'async', documents, uid },
+            { message, payload, executionMode: eventConfig?.type || 'async', documents },
             {
                 headers: {
                     'app-id': config.appId,
@@ -58,7 +56,6 @@ const emitEvent = (params: {
     payload?: any;
     documents?: { signedUrl: string; fileName?: string; mimeType?: string }[];
     agentId: string;
-    uid?: string;
 }) => {
     const agent = AGENT_CONFIGS.find(a => a.id === params.agentId);
     if (!agent) return;
